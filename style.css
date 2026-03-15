@@ -296,6 +296,14 @@ input[type="number"] {
   min-width: 160px;
 }
 
+/* Keyboard hints */
+.key-hints {
+  display: flex;
+  gap: 20px;
+  font-size: 0.78rem;
+  color: #999;
+}
+
 /* Controls row */
 .controls-row {
   display: flex;
