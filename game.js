@@ -27,8 +27,10 @@ let rotateX_deg = 64;
 const board3d = document.getElementById('board-3d');
 const axis3d = document.querySelector('.axis-3d');
 
+const UI_OVERHEAD = 240; // title + scores + status + controls + button + gaps
+
 function getCellSize() {
-  const available = Math.min(window.innerWidth * 0.92, window.innerHeight * 0.75);
+  const available = Math.min(window.innerWidth * 0.92, window.innerHeight - UI_OVERHEAD);
   return Math.max(Math.floor((available - 2 * BOARD_PADDING - (SIZE - 1) * GAP) / SIZE), MIN_CELL);
 }
 
