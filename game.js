@@ -27,6 +27,11 @@ let rotateX_deg = 64;
 const board3d = document.getElementById('board-3d');
 const axis3d = document.querySelector('.axis-3d');
 
+// Touch state
+let touchStartX = 0, touchStartY = 0;
+let lastTapTime = 0, lastTapKey = '';
+let pendingTouchClick = false;
+
 const UI_OVERHEAD = 250; // title + scores + status + controls + key hints + button + gaps
 
 function getCellSize() {
@@ -174,7 +179,29 @@ function buildLayerEl(layer, isActive, cellSize, validSet) {
         cell.appendChild(piece);
       } else if (isActive && validSet.has(`${row},${col}`)) {
         cell.classList.add('valid');
-        cell.addEventListener('click', () => handleCellClick(row, col));
+
+        // Desktop: single click
+        cell.addEventListener('click', () => {
+          if (pendingTouchClick) { pendingTouchClick = false; return; }
+          handleCellClick(row, col);
+        });
+
+        // Mobile: double-tap
+        cell.addEventListener('touchend', e => {
+          const t = e.changedTouches[0];
+          if (Math.abs(t.clientX - touchStartX) > 15 || Math.abs(t.clientY - touchStartY) > 15) return;
+          pendingTouchClick = true;
+          const now = Date.now();
+          const key = `${layer},${row},${col}`;
+          if (now - lastTapTime < 300 && lastTapKey === key) {
+            e.preventDefault();
+            pendingTouchClick = false;
+            handleCellClick(row, col);
+            lastTapTime = 0; lastTapKey = '';
+          } else {
+            lastTapTime = now; lastTapKey = key;
+          }
+        }, { passive: false });
       }
       boardEl.appendChild(cell);
     }
@@ -279,6 +306,26 @@ bindControl({ inputId: 'opacity-input', upId: 'opacity-up', downId: 'opacity-dow
 bindControl({ inputId: 'angle-input',   upId: 'angle-up',   downId: 'angle-down',   min: 0,  max: 89,  step: 1, get: () => rotateX_deg,      set: v => { rotateX_deg = v; },      onchange: applyTransform, errId: 'angle-err' });
 
 window.addEventListener('resize', render);
+
+// Swipe to rotate / switch layer
+const scene = document.getElementById('scene');
+scene.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+scene.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    rotateZ += dx > 0 ? 15 : -15;
+    applyTransform();
+  } else {
+    if (dy < 0 && activeLayer < LAYERS - 1) { activeLayer++; render(); }
+    else if (dy > 0 && activeLayer > 0)     { activeLayer--; render(); }
+  }
+}, { passive: true });
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft')       { rotateZ -= 5; applyTransform(); e.preventDefault(); }

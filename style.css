@@ -71,6 +71,7 @@ h1 {
   perspective-origin: 50% 50%;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: none;
   position: relative;
   display: flex;
   align-items: center;
