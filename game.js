@@ -134,9 +134,11 @@ function handleCellClick(row, col) {
 }
 
 function updateStatus() {
+  const { black, white } = countPieces();
+  document.getElementById('black-count').textContent = black;
+  document.getElementById('white-count').textContent = white;
   const statusEl = document.getElementById('status');
   if (gameOver) {
-    const { black, white } = countPieces();
     if (black > white) statusEl.textContent = `Black wins! (${black}–${white})`;
     else if (white > black) statusEl.textContent = `White wins! (${white}–${black})`;
     else statusEl.textContent = `It's a tie! (${black}–${white})`;
@@ -180,13 +182,11 @@ function buildLayerEl(layer, isActive, cellSize, validSet) {
       } else if (isActive && validSet.has(`${row},${col}`)) {
         cell.classList.add('valid');
 
-        // Desktop: single click
         cell.addEventListener('click', () => {
           if (pendingTouchClick) { pendingTouchClick = false; return; }
           handleCellClick(row, col);
         });
 
-        // Mobile: double-tap
         cell.addEventListener('touchend', e => {
           const t = e.changedTouches[0];
           if (Math.abs(t.clientX - touchStartX) > 15 || Math.abs(t.clientY - touchStartY) > 15) return;
@@ -224,10 +224,6 @@ function render() {
 
   for (let layer = 0; layer < LAYERS; layer++)
     containerEl.appendChild(buildLayerEl(layer, layer === activeLayer, cellSize, validSet));
-
-  const { black, white } = countPieces();
-  document.getElementById('black-count').textContent = black;
-  document.getElementById('white-count').textContent = white;
 
   const axisHeight = (LAYERS - 1) * layer_gap + 120;
   const axisLine = document.querySelector('.axis-3d-line');
@@ -305,9 +301,16 @@ bindControl({ inputId: 'space-input',   upId: 'space-up',   downId: 'space-down'
 bindControl({ inputId: 'opacity-input', upId: 'opacity-up', downId: 'opacity-down', min: 5,  max: 100, step: 5, get: () => inactive_opacity, set: v => { inactive_opacity = v; }, onchange: render,         errId: 'opacity-err' });
 bindControl({ inputId: 'angle-input',   upId: 'angle-up',   downId: 'angle-down',   min: 0,  max: 89,  step: 1, get: () => rotateX_deg,      set: v => { rotateX_deg = v; },      onchange: applyTransform, errId: 'angle-err' });
 
+const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+if (!isMobile) document.getElementById('view-controls').open = true;
+
 window.addEventListener('resize', render);
 
-// Swipe to rotate / switch layer
+function changeLayer(delta) {
+  const next = activeLayer + delta;
+  if (next >= 0 && next < LAYERS) { activeLayer = next; render(); }
+}
+
 const scene = document.getElementById('scene');
 scene.addEventListener('touchstart', e => {
   touchStartX = e.touches[0].clientX;
@@ -319,17 +322,16 @@ scene.addEventListener('touchend', e => {
   const dy = e.changedTouches[0].clientY - touchStartY;
   if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
   if (Math.abs(dx) >= Math.abs(dy)) {
-    rotateZ += dx > 0 ? 15 : -15;
+    rotateZ += dx > 0 ? -15 : 15;
     applyTransform();
   } else {
-    if (dy < 0 && activeLayer < LAYERS - 1) { activeLayer++; render(); }
-    else if (dy > 0 && activeLayer > 0)     { activeLayer--; render(); }
+    changeLayer(dy < 0 ? 1 : -1);
   }
 }, { passive: true });
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft')       { rotateZ -= 5; applyTransform(); e.preventDefault(); }
   else if (e.key === 'ArrowRight') { rotateZ += 5; applyTransform(); e.preventDefault(); }
-  else if (e.key === 'ArrowUp')    { if (activeLayer < LAYERS - 1) { activeLayer++; render(); } e.preventDefault(); }
-  else if (e.key === 'ArrowDown')  { if (activeLayer > 0)          { activeLayer--; render(); } e.preventDefault(); }
+  else if (e.key === 'ArrowUp')    { changeLayer(1);  e.preventDefault(); }
+  else if (e.key === 'ArrowDown')  { changeLayer(-1); e.preventDefault(); }
 });

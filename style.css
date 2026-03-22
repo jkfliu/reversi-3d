@@ -258,18 +258,17 @@ h1 {
 
 
 .setup-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.setup-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  width: fit-content;
+  margin: 0 auto;
+  column-gap: 16px;
+  row-gap: 12px;
   align-items: center;
-  gap: 10px;
   font-size: 0.88rem;
   color: #444;
 }
+
 
 input[type="number"] {
   text-align: center;
@@ -281,7 +280,7 @@ input[type="number"] {
   color: #222;
 }
 
-.setup-row input[type="number"] {
+.setup-grid input[type="number"] {
   width: 60px;
   padding: 5px 8px;
 }
@@ -294,7 +293,76 @@ input[type="number"] {
 .setup-err {
   color: #c00;
   font-size: 0.78rem;
-  min-width: 160px;
+}
+
+/* View controls — desktop: always open, summary hidden */
+.view-controls {
+  list-style: none;
+}
+.view-controls > summary {
+  display: none;
+}
+
+/* Mobile: fix viewport height and center setup screen */
+@media (hover: none) and (pointer: coarse) {
+  body {
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Mobile: show as a dropdown constrained to board width */
+@media (hover: none) and (pointer: coarse) {
+  .view-controls {
+    width: 92vw;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .view-controls > summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 16px;
+    background: #333;
+    color: #fff;
+    font-size: 0.88rem;
+    font-family: system-ui, sans-serif;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .view-controls > summary::-webkit-details-marker { display: none; }
+
+  .view-controls[open] > summary {
+    border-bottom: 1px solid #ccc;
+  }
+
+  .view-controls .controls-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 10px;
+    padding: 14px 16px;
+    background: #f8f8f8;
+  }
+
+  /* Dissolve each spacing-control into the grid so children line up as columns */
+  .view-controls .spacing-control {
+    display: contents;
+  }
+
+  /* Error spans span full width below their row */
+  .view-controls .spacing-control .setup-err {
+    display: block;
+    grid-column: 1 / -1;
+    margin-top: -6px;
+  }
 }
 
 /* Keyboard hints */
