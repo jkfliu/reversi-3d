@@ -363,6 +363,9 @@ input[type="number"] {
     grid-column: 1 / -1;
     margin-top: -6px;
   }
+  .view-controls .spacing-control .setup-err:empty {
+    display: none;
+  }
 }
 
 /* Keyboard hints */
